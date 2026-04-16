@@ -25,27 +25,39 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap, QColor, QPalette
 
-# Импорт из локальных модулей (относительные импорты для запуска внутри пакета)
+# Импорт из локальных модулей
+# Определяем директорию текущего файла для корректного импорта
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+
+# Добавляем parent_dir в sys.path для импорта пакета vk_modifier
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Пробуем импорт как пакет, затем как отдельные модули
 try:
-    from .models import TrackInfo, ProcessingSettings, Metadata
-    from .processors import FilterBuilder, AudioProcessor
-    from .utils import (
+    from vk_modifier.models import TrackInfo, ProcessingSettings, Metadata
+    from vk_modifier.processors import FilterBuilder, AudioProcessor
+    from vk_modifier.utils import (
         ConfigManager, MetadataExtractor, PresetManager,
         check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
         get_eq_values, get_phase_values, get_noise_values
     )
+    from vk_modifier.ui import CoverPreviewLabel, CollapsibleGroup
 except ImportError:
-    # Если запускается как скрипт напрямую
-    from models import TrackInfo, ProcessingSettings, Metadata
-    from processors import FilterBuilder, AudioProcessor
-    from utils import (
-        ConfigManager, MetadataExtractor, PresetManager,
-        check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
-        get_eq_values, get_phase_values, get_noise_values
-    )
-    from .ui import CoverPreviewLabel, CollapsibleGroup
-except ImportError:
-    from ui import CoverPreviewLabel, CollapsibleGroup
+    try:
+        from models import TrackInfo, ProcessingSettings, Metadata
+        from processors import FilterBuilder, AudioProcessor
+        from utils import (
+            ConfigManager, MetadataExtractor, PresetManager,
+            check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
+            get_eq_values, get_phase_values, get_noise_values
+        )
+        from ui import CoverPreviewLabel, CollapsibleGroup
+    except ImportError as e:
+        print(f"Ошибка импорта: {e}")
+        print("Убедитесь, что запускаете скрипт из директории vk_modifier или установите пакет.")
+        sys.exit(1)
 
 
 CONFIG_FILE = "vk_modifier_config.json"
