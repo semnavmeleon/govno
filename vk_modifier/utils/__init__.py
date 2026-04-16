@@ -7,7 +7,36 @@ import json
 import sys
 from typing import Dict, Any, Optional
 
+from vk_modifier.processors import PRESETS
+
 CONFIG_FILE = "vk_modifier_config.json"
+
+
+class PresetManager:
+    """Менеджер пресетов обработки"""
+    
+    def __init__(self):
+        self.presets = PRESETS.copy()
+    
+    def get_preset_names(self) -> list:
+        """Возвращает список имен пресетов"""
+        return list(self.presets.keys())
+    
+    def get_preset_info(self, preset_name: str) -> Dict[str, Any]:
+        """Возвращает информацию о пресете"""
+        if preset_name in self.presets:
+            return {
+                "name": self.presets[preset_name]["name"],
+                "description": self.presets[preset_name]["description"],
+                "settings": self.presets[preset_name]["settings"].copy()
+            }
+        raise ValueError(f"Preset '{preset_name}' not found")
+    
+    def apply_preset(self, preset_name: str) -> Dict[str, Any]:
+        """Применяет пресет и возвращает настройки"""
+        if preset_name not in self.presets:
+            raise ValueError(f"Preset '{preset_name}' not found")
+        return self.presets[preset_name]["settings"].copy()
 
 
 class ConfigManager:
@@ -21,12 +50,14 @@ class ConfigManager:
         'eq_value': 3,
         'quality': '2',
         'preserve_metadata': True,
-        'preserve_cover': True
+        'preserve_cover': True,
+        'preset_name': 'safe'  # Новый пресет по умолчанию
     }
 
     def __init__(self, config_path: str = CONFIG_FILE):
         self.config_path = config_path
         self.config = self.DEFAULT_CONFIG.copy()
+        self.preset_manager = PresetManager()
 
     def load(self) -> Dict[str, Any]:
         """Загружает конфигурацию из файла"""

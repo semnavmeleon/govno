@@ -1,11 +1,12 @@
 """
 Модуль моделей данных для VK Modifier
+Исправленная версия с валидацией и новыми пресетами
 """
 
 import os
 import hashlib
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 @dataclass
@@ -37,140 +38,105 @@ class TrackInfo:
 
 @dataclass
 class ProcessingSettings:
-    """Класс для хранения настроек обработки"""
-    # Основные методы
-    trim_silence: bool = False
-    cut_fragment: bool = False
-    fade_out: bool = False
-    broken_duration: bool = False
-    pitch: bool = False
-    silence: bool = False
-    speed: bool = False
-    eq: bool = False
-    phase: bool = False
-    noise: bool = False
-    compression: bool = False
-    ultrasound: bool = False
-    dc_shift: bool = False
-    merge: bool = False
-    bitrate_jitter: bool = False
-    frame_shift: bool = False
-    fake_metadata: bool = False
-    reorder_tags: bool = False
-
-    # Параметры методов
-    broken_type: int = 0
-    trim_duration: int = 5
-    cut_position_percent: int = 50
-    cut_duration: int = 2
-    fade_duration: int = 5
-    pitch_value: float = -1.0
-    silence_duration: int = 45
-    speed_value: float = 1.01
-    eq_value: int = 4
-    eq_type: int = 1
-    phase_value: float = 0.5
-    noise_value: float = 0.0005
+    """
+    Класс для хранения настроек обработки с валидацией
+    Новые поля для улучшенной обработки аудио
+    """
+    # Громкость и динамика
+    volume: float = 0.0  # dB (-50 to 20)
+    normalize: bool = True
+    target_loudness: float = -14.0  # LUFS (-24 to -10)
+    compress: bool = True
+    compress_threshold: float = -20.0  # dB (-60 to 0)
+    compress_ratio: float = 4.0  # (1 to 20)
+    compress_attack: float = 20.0  # ms (0.1 to 100)
+    compress_release: float = 100.0  # ms (10 to 500)
+    
+    # Эквализация
+    bass_gain: float = 0.0  # dB (-20 to 20)
+    bass_freq: float = 100.0  # Hz (20 to 500)
+    treble_gain: float = 0.0  # dB (-20 to 20)
+    treble_freq: float = 10000.0  # Hz (1000 to 20000)
+    
+    # Скорость и питч
+    speed: float = 1.0  # (0.5 to 2.0)
+    pitch: float = 0.0  # semitones (-12 to 12)
+    
+    # Дополнительно
+    fade_in: float = 0.0  # seconds (0 to 10)
+    fade_out: float = 0.0  # seconds (0 to 10)
+    silence_threshold: float = -50.0  # dB (-100 to -20)
+    
+    # Пресет
+    preset_name: str = "safe"
+    
+    # Для совместимости со старым кодом
+    methods: Dict[str, Any] = field(default_factory=dict)
     quality: str = '2'
-
-    # Общие настройки
     preserve_metadata: bool = True
     preserve_cover: bool = True
-    rename_files: bool = True
-    delete_original: bool = False
-    reupload: bool = False
-    extra_track_path: str = ""
 
-    def to_dict(self) -> dict:
+    def __post_init__(self):
+        """Валидация после инициализации"""
+        self.validate()
+    
+    def validate(self):
+        """Проверка диапазонов значений"""
+        def clamp(val, min_val, max_val, name):
+            if val < min_val or val > max_val:
+                raise ValueError(f"{name} должен быть в диапазоне [{min_val}, {max_val}], получено {val}")
+            return max(min_val, min(val, max_val))
+        
+        self.volume = clamp(self.volume, -50, 20, "Volume")
+        self.target_loudness = clamp(self.target_loudness, -24, -10, "Target Loudness")
+        self.compress_threshold = clamp(self.compress_threshold, -60, 0, "Compress Threshold")
+        self.compress_ratio = clamp(self.compress_ratio, 1, 20, "Compress Ratio")
+        self.compress_attack = clamp(self.compress_attack, 0.1, 100, "Compress Attack")
+        self.compress_release = clamp(self.compress_release, 10, 500, "Compress Release")
+        
+        self.bass_gain = clamp(self.bass_gain, -20, 20, "Bass Gain")
+        self.bass_freq = clamp(self.bass_freq, 20, 500, "Bass Freq")
+        self.treble_gain = clamp(self.treble_gain, -20, 20, "Treble Gain")
+        self.treble_freq = clamp(self.treble_freq, 1000, 20000, "Treble Freq")
+        
+        self.speed = clamp(self.speed, 0.5, 2.0, "Speed")
+        self.pitch = clamp(self.pitch, -12, 12, "Pitch")
+        
+        self.fade_in = clamp(self.fade_in, 0, 10, "Fade In")
+        self.fade_out = clamp(self.fade_out, 0, 10, "Fade Out")
+        self.silence_threshold = clamp(self.silence_threshold, -100, -20, "Silence Threshold")
+    
+    def to_dict(self) -> Dict[str, Any]:
         """Конвертирует настройки в словарь"""
         return {
-            'methods': {
-                'trim_silence': self.trim_silence,
-                'cut_fragment': self.cut_fragment,
-                'fade_out': self.fade_out,
-                'broken_duration': self.broken_duration,
-                'pitch': self.pitch,
-                'silence': self.silence,
-                'speed': self.speed,
-                'eq': self.eq,
-                'phase': self.phase,
-                'noise': self.noise,
-                'compression': self.compression,
-                'ultrasound': self.ultrasound,
-                'dc_shift': self.dc_shift,
-                'merge': self.merge,
-                'bitrate_jitter': self.bitrate_jitter,
-                'frame_shift': self.frame_shift,
-                'fake_metadata': self.fake_metadata,
-                'reorder_tags': self.reorder_tags
-            },
-            'broken_type': self.broken_type,
-            'trim_duration': self.trim_duration,
-            'cut_position_percent': self.cut_position_percent,
-            'cut_duration': self.cut_duration,
-            'fade_duration': self.fade_duration,
-            'pitch_value': self.pitch_value,
-            'silence_duration': self.silence_duration,
-            'speed_value': self.speed_value,
-            'eq_value': self.eq_value,
-            'eq_type': self.eq_type,
-            'phase_value': self.phase_value,
-            'noise_value': self.noise_value,
-            'quality': self.quality,
-            'preserve_metadata': self.preserve_metadata,
-            'preserve_cover': self.preserve_cover,
-            'rename_files': self.rename_files,
-            'delete_original': self.delete_original,
-            'reupload': self.reupload,
-            'extra_track_path': self.extra_track_path if self.merge else ""
+            "volume": self.volume,
+            "normalize": self.normalize,
+            "target_loudness": self.target_loudness,
+            "compress": self.compress,
+            "compress_threshold": self.compress_threshold,
+            "compress_ratio": self.compress_ratio,
+            "compress_attack": self.compress_attack,
+            "compress_release": self.compress_release,
+            "bass_gain": self.bass_gain,
+            "bass_freq": self.bass_freq,
+            "treble_gain": self.treble_gain,
+            "treble_freq": self.treble_freq,
+            "speed": self.speed,
+            "pitch": self.pitch,
+            "fade_in": self.fade_in,
+            "fade_out": self.fade_out,
+            "silence_threshold": self.silence_threshold,
+            "preset_name": self.preset_name,
+            "methods": self.methods,
+            "quality": self.quality,
+            "preserve_metadata": self.preserve_metadata,
+            "preserve_cover": self.preserve_cover
         }
-
+    
     @classmethod
-    def from_dict(cls, data: dict) -> 'ProcessingSettings':
-        """Создаёт объект настроек из словаря"""
-        settings = cls()
-        
-        methods = data.get('methods', {})
-        settings.trim_silence = methods.get('trim_silence', False)
-        settings.cut_fragment = methods.get('cut_fragment', False)
-        settings.fade_out = methods.get('fade_out', False)
-        settings.broken_duration = methods.get('broken_duration', False)
-        settings.pitch = methods.get('pitch', False)
-        settings.silence = methods.get('silence', False)
-        settings.speed = methods.get('speed', False)
-        settings.eq = methods.get('eq', False)
-        settings.phase = methods.get('phase', False)
-        settings.noise = methods.get('noise', False)
-        settings.compression = methods.get('compression', False)
-        settings.ultrasound = methods.get('ultrasound', False)
-        settings.dc_shift = methods.get('dc_shift', False)
-        settings.merge = methods.get('merge', False)
-        settings.bitrate_jitter = methods.get('bitrate_jitter', False)
-        settings.frame_shift = methods.get('frame_shift', False)
-        settings.fake_metadata = methods.get('fake_metadata', False)
-        settings.reorder_tags = methods.get('reorder_tags', False)
-        
-        settings.broken_type = data.get('broken_type', 0)
-        settings.trim_duration = data.get('trim_duration', 5)
-        settings.cut_position_percent = data.get('cut_position_percent', 50)
-        settings.cut_duration = data.get('cut_duration', 2)
-        settings.fade_duration = data.get('fade_duration', 5)
-        settings.pitch_value = data.get('pitch_value', -1.0)
-        settings.silence_duration = data.get('silence_duration', 45)
-        settings.speed_value = data.get('speed_value', 1.01)
-        settings.eq_value = data.get('eq_value', 4)
-        settings.eq_type = data.get('eq_type', 1)
-        settings.phase_value = data.get('phase_value', 0.5)
-        settings.noise_value = data.get('noise_value', 0.0005)
-        settings.quality = data.get('quality', '2')
-        settings.preserve_metadata = data.get('preserve_metadata', True)
-        settings.preserve_cover = data.get('preserve_cover', True)
-        settings.rename_files = data.get('rename_files', True)
-        settings.delete_original = data.get('delete_original', False)
-        settings.reupload = data.get('reupload', False)
-        settings.extra_track_path = data.get('extra_track_path', '')
-        
-        return settings
+    def from_dict(cls, data: Dict[str, Any]) -> 'ProcessingSettings':
+        """Создает настройки из словаря"""
+        return cls(**data)
 
 
 @dataclass
