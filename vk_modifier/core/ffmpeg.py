@@ -170,21 +170,6 @@ def probe_file(file_path: str) -> dict | None:
     return None
 
 
-def generate_spectrogram(input_file: str, output_png: str,
-                         width: int = 800, height: int = 200) -> bool:
-    """Сгенерировать спектрограмму (PNG) через ffmpeg showspectrumpic."""
-    try:
-        result = run_ffmpeg([
-            '-i', input_file,
-            '-lavfi', f'showspectrumpic=s={width}x{height}:mode=combined:color=intensity',
-            '-y', output_png,
-        ], timeout=60)
-        return result.returncode == 0 and os.path.isfile(output_png)
-    except Exception as e:
-        logger.warning(f"Spectrogram error: {e}")
-        return False
-
-
 def get_audio_fingerprint(file_path: str) -> str | None:
     """Получить акустический хеш (MD5 PCM-потока) через ffmpeg."""
     try:

@@ -8,7 +8,21 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from ..widgets import GlassCard, SliderWithLabel, WaveformWidget
-from ..styles import GLASS_BTN
+
+
+GLASS_BTN = """
+    QPushButton {
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 12px; padding: 10px 18px;
+        color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500;
+    }
+    QPushButton:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); }
+    QPushButton:pressed { background: rgba(255,255,255,0.03); }
+    QPushButton:disabled {
+        background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.20);
+        border-color: rgba(255,255,255,0.04);
+    }
+"""
 
 
 class StructureTab(QScrollArea):
