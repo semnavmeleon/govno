@@ -1171,7 +1171,44 @@ class VKTrackModifier(QMainWindow):
         phase_values = get_phase_values()
         noise_values = get_noise_values()
 
+        # Получаем значения из UI
+        speed_value = speed_values[self.speed_combo.currentIndex()]
+        pitch_value = pitch_values[self.pitch_combo.currentIndex()]
+        eq_value = eq_values[self.eq_combo.currentIndex()]
+        eq_type = self.eq_combo.currentIndex()
+        
+        # Преобразуем EQ в bass/treble gain
+        # eq_type: 0=None, 1=Bass, 2=Mid, 3=Treble
+        bass_gain = 0.0
+        treble_gain = 0.0
+        if eq_type == 1:  # Bass
+            bass_gain = eq_value
+        elif eq_type == 3:  # Treble
+            treble_gain = eq_value
+        elif eq_type == 2:  # Mid - применяем и к басам и к высоким
+            bass_gain = eq_value * 0.5
+            treble_gain = eq_value * 0.5
+
         settings = {
+            # Новые параметры для FilterBuilder
+            'volume': 0.0,
+            'normalize': False,
+            'target_loudness': -14.0,
+            'compress': self.method_compression.isChecked(),
+            'compress_threshold': -20.0,
+            'compress_ratio': 4.0,
+            'compress_attack': 20.0,
+            'compress_release': 100.0,
+            'bass_gain': bass_gain,
+            'bass_freq': 100.0,
+            'treble_gain': treble_gain,
+            'treble_freq': 10000.0,
+            'speed': speed_value if self.method_speed.isChecked() else 1.0,
+            'pitch': pitch_value if self.method_pitch.isChecked() else 0.0,
+            'fade_in': 0.0,
+            'fade_out': float(self.fade_duration_spin.value()) if self.method_fade_out.isChecked() else 0.0,
+            
+            # Старые параметры для совместимости
             'methods': {
                 'trim_silence': self.method_trim_silence.isChecked(),
                 'cut_fragment': self.method_cut_fragment.isChecked(),
@@ -1197,11 +1234,11 @@ class VKTrackModifier(QMainWindow):
             'cut_position_percent': self.cut_position_spin.value(),
             'cut_duration': self.cut_duration_spin.value(),
             'fade_duration': self.fade_duration_spin.value(),
-            'pitch_value': pitch_values[self.pitch_combo.currentIndex()],
+            'pitch_value': pitch_value,
             'silence_duration': self.silence_spin.value(),
-            'speed_value': speed_values[self.speed_combo.currentIndex()],
-            'eq_value': eq_values[self.eq_combo.currentIndex()],
-            'eq_type': self.eq_combo.currentIndex(),
+            'speed_value': speed_value,
+            'eq_value': eq_value,
+            'eq_type': eq_type,
             'phase_value': phase_values[self.phase_combo.currentIndex()],
             'noise_value': noise_values[self.noise_combo.currentIndex()],
             'quality': quality_map[self.quality_combo.currentIndex()],
