@@ -1248,6 +1248,13 @@ class VKTrackModifier(QMainWindow):
         if settings['methods']['merge'] and not settings['extra_track_path']:
             QMessageBox.warning(self, "Внимание", "Выбран метод сращивания, но не выбран трек!")
             return
+        
+        # Дополнительная проверка существования файла трека для сращивания
+        if settings['methods']['merge'] and settings['extra_track_path']:
+            if not os.path.exists(settings['extra_track_path']):
+                QMessageBox.warning(self, "Внимание", 
+                    f"Файл для сращивания не найден:\n{settings['extra_track_path']}")
+                return
 
         self._set_ui_enabled(False)
         self.progress_bar.setVisible(True)
