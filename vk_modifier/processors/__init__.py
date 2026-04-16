@@ -335,12 +335,21 @@ class AudioProcessor:
 
     def merge_tracks(self, primary_track: str, extra_track: str) -> str:
         """Сращивает два трека"""
-        # Создаём файл списка для concat demuxer
+        # Проверяем существование файлов перед сращиванием
+        if not os.path.exists(primary_track):
+            raise Exception(f"Primary track not found: {primary_track}")
+        if not os.path.exists(extra_track):
+            raise Exception(f"Extra track not found: {extra_track}")
+        
+        # Создаём файл списка для concat demuxer с экранированием путей
         concat_list = tempfile.NamedTemporaryFile(
-            mode='w', suffix='.txt', delete=False
+            mode='w', suffix='.txt', delete=False, encoding='utf-8'
         )
-        concat_list.write(f"file '{primary_track}'\n")
-        concat_list.write(f"file '{extra_track}'")
+        # Экранируем одиночные кавычки и обратные слеши в путях для FFmpeg concat формата
+        escaped_primary = primary_track.replace("'", "'\\''").replace('\\', '/')
+        escaped_extra = extra_track.replace("'", "'\\''").replace('\\', '/')
+        concat_list.write(f"file '{escaped_primary}'\n")
+        concat_list.write(f"file '{escaped_extra}'")
         concat_list.close()
         self.temp_files.append(concat_list.name)
 
