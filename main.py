@@ -43,7 +43,7 @@ def main():
     font.setHintingPreference(QFont.PreferNoHinting)
     app.setFont(font)
 
-    from vk_modifier.ui.daw_interface import DAWMainWindow
+    from ui.daw_interface import DAWMainWindow
     window = DAWMainWindow()
     window.show()
 
