@@ -1,1 +1,17 @@
-Nothing should be ignored based on the provided file changes. The modification of 'vk_modifier/main.py' represents a source code file change, which should be tracked by git. No build artifacts, dependencies, or temporary files are present in the changes to warrant adding ignore rules.
+```
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+```
