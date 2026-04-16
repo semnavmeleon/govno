@@ -1,17 +1,30 @@
 ```
-# Python
+# Compiled Python files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual environments
-venv/
+# Dependencies
 .venv/
-env/
+venv/
+.env
+.env.local
+*.env.*
 
 # Build artifacts
-build/
 dist/
+build/
 *.egg-info/
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```

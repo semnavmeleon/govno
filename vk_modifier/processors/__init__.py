@@ -5,6 +5,7 @@
 import os
 import random
 import subprocess
+import sys
 import tempfile
 from typing import List, Optional, Tuple
 
@@ -163,10 +164,12 @@ class AudioProcessor:
         cmd = [
             self.ffmpeg_path, '-i', input_path,
             '-ss', f'00:00:{trim_seconds}',
-            '-codec:a', 'copy',
+            '-codec:a', 'libmp3lame', '-q:a', '2',
             '-y', output.name
         ]
-        subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        result = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        if result.returncode != 0:
+            raise Exception(f"FFmpeg trim error: {result.stderr}")
         return output.name
 
     def cut_fragment(
@@ -203,7 +206,9 @@ class AudioProcessor:
             '-codec:a', 'libmp3lame', '-q:a', '2',
             '-y', output.name
         ]
-        subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        result = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        if result.returncode != 0:
+            raise Exception(f"FFmpeg cut error: {result.stderr}")
         return output.name
 
     def merge_tracks(self, primary_track: str, extra_track: str) -> str:
@@ -227,7 +232,9 @@ class AudioProcessor:
             '-codec:a', 'libmp3lame', '-q:a', '2',
             '-y', output.name
         ]
-        subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        result = subprocess.run(cmd, capture_output=True, encoding='utf-8', errors='ignore')
+        if result.returncode != 0:
+            raise Exception(f"FFmpeg merge error: {result.stderr}")
         return output.name
 
     def process_audio(
