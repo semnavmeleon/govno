@@ -25,15 +25,27 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap, QColor, QPalette
 
-# Импорт из модулей vk_modifier
-from vk_modifier.models import TrackInfo, ProcessingSettings, Metadata
-from vk_modifier.processors import FilterBuilder, AudioProcessor
-from vk_modifier.utils import (
-    ConfigManager, MetadataExtractor, PresetManager,
-    check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
-    get_eq_values, get_phase_values, get_noise_values
-)
-from vk_modifier.ui import CoverPreviewLabel, CollapsibleGroup
+# Импорт из локальных модулей (относительные импорты для запуска внутри пакета)
+try:
+    from .models import TrackInfo, ProcessingSettings, Metadata
+    from .processors import FilterBuilder, AudioProcessor
+    from .utils import (
+        ConfigManager, MetadataExtractor, PresetManager,
+        check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
+        get_eq_values, get_phase_values, get_noise_values
+    )
+except ImportError:
+    # Если запускается как скрипт напрямую
+    from models import TrackInfo, ProcessingSettings, Metadata
+    from processors import FilterBuilder, AudioProcessor
+    from utils import (
+        ConfigManager, MetadataExtractor, PresetManager,
+        check_ffmpeg, get_quality_map, get_pitch_values, get_speed_values,
+        get_eq_values, get_phase_values, get_noise_values
+    )
+    from .ui import CoverPreviewLabel, CollapsibleGroup
+except ImportError:
+    from ui import CoverPreviewLabel, CollapsibleGroup
 
 
 CONFIG_FILE = "vk_modifier_config.json"
