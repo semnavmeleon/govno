@@ -341,15 +341,22 @@ class AudioProcessor:
         if not os.path.exists(extra_track):
             raise Exception(f"Extra track not found: {extra_track}")
         
-        # Создаём файл списка для concat demuxer с экранированием путей
+        # Для FFmpeg concat demuxer на Windows нужно использовать абсолютные пути
+        # и экранировать их правильно. Используем format 'file' с двойными кавычками
+        # и экранируем обратные слеши
+        abs_primary = os.path.abspath(primary_track).replace('\\', '/')
+        abs_extra = os.path.abspath(extra_track).replace('\\', '/')
+        
+        # Создаём файл списка для concat demuxer
+        # Формат: file 'path' или file "path" для путей с пробелами
         concat_list = tempfile.NamedTemporaryFile(
             mode='w', suffix='.txt', delete=False, encoding='utf-8'
         )
-        # Экранируем одиночные кавычки и обратные слеши в путях для FFmpeg concat формата
-        escaped_primary = primary_track.replace("'", "'\\''").replace('\\', '/')
-        escaped_extra = extra_track.replace("'", "'\\''").replace('\\', '/')
+        # Экранируем одиночные кавычки в путях (заменяем ' на '\'' для shell escaping)
+        escaped_primary = abs_primary.replace("'", "'\\''")
+        escaped_extra = abs_extra.replace("'", "'\\''")
         concat_list.write(f"file '{escaped_primary}'\n")
-        concat_list.write(f"file '{escaped_extra}'")
+        concat_list.write(f"file '{escaped_extra}'\n")
         concat_list.close()
         self.temp_files.append(concat_list.name)
 
